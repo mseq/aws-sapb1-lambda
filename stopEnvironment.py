@@ -70,8 +70,8 @@ def lambda_handler(event, context):
                 ]
             )['Images']
             if res:
-                logger.info(f"Deleting IMG {d} {res[0]['ImageId']}")
-                ec2.deregister_image(res[0]['ImageId'])
+                logger.info(f"Deleting WinClient IMG {imgName} {res[0]['ImageId']}")
+                ec2.deregister_image(ImageId=res[0]['ImageId'])
             else:
                 logger.warning(f"No WinClient image to delete {d}")
 
@@ -86,8 +86,8 @@ def lambda_handler(event, context):
                 ]
             )['Images']
             if res:
-                logger.info(f"Deleting IMG {d} {res[0]['ImageId']}")
-                ec2.deregister_image(res[0]['ImageId'])
+                logger.info(f"Deleting Hana IMG {imgName} {res[0]['ImageId']}")
+                ec2.deregister_image(ImageId=res[0]['ImageId'])
             else:
                 logger.warning(f"No Hana Master image to delete {d}")
 
