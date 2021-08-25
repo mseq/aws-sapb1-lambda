@@ -79,7 +79,7 @@ def main():
 
             # Find and deregister the HanaImg
             imgName=f"SAPHanaMaster-IMG-{d}"
-            resh = ec2.describe_images(
+            res = ec2.describe_images(
                 Filters=[
                         {
                             'Name': 'name', 
