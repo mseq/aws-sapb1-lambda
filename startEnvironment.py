@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 import boto3
 import logging
 import time
+import json
 
-# def main():
-def lambda_handler(event, context):
+def main():
+# def lambda_handler(event, context):
 
     # Take boto3 clients
     ssm = boto3.client('ssm')
@@ -94,6 +95,10 @@ def lambda_handler(event, context):
 
             logger.info(f"Image state is {state}")
 
+        # Update Param Store with the right IMG
+        logger.info(f"SSM Parameter CFN-NLB-WinCientAMI-Id updated with {res}")
+        res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=[res])
+
         # Execute Cloud Formation Stack
         res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
         url = ssm.get_parameter(Name='CFN-NLB-TemplateUrl')['Parameter']['Value']
@@ -113,5 +118,5 @@ def lambda_handler(event, context):
         res = ec2.start_instances(InstanceIds=[res])
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

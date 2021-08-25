@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 import boto3
 import logging
 import time
+import json
 
-# def main():
-def lambda_handler(event, context):
+def main():
+# def lambda_handler(event, context):
 
     # Take boto3 clients
     ssm = boto3.client('ssm')
@@ -100,5 +101,5 @@ def lambda_handler(event, context):
         res = ec2.start_instances(InstanceIds=[res])
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
