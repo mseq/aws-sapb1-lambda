@@ -41,8 +41,8 @@ def main():
     logger.addHandler(ch)
 
 
-    d = str(datetime.today().strftime('%Y%m%d'))
-    h = str(datetime.today().strftime('%H:%M'))
+    d = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%Y%m%d'))
+    h = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%H:%M'))
     logger.debug(f"Starting script StopEnvironment {d} {h}")
 
 
