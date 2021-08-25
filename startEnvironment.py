@@ -81,7 +81,7 @@ def lambda_handler(event, context):
 
         logger.info(f"Image state is {state}")
         while state != "available":
-            time.sleep(300)
+            time.sleep(30)
 
             state = ec2.describe_images(
                 Filters=[
@@ -98,7 +98,7 @@ def lambda_handler(event, context):
         res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
         url = ssm.get_parameter(Name='CFN-NLB-TemplateUrl')['Parameter']['Value']
         logger.info(f"Creating CloudFormation Stack {res}")
-        res = cfn.create_Stack(StackName=res, TemplateURL=url, Capabilities=['CAPABILITY_NAMED_IAM'], 
+        res = cfn.create_stack(StackName=res, TemplateURL=url, Capabilities=['CAPABILITY_NAMED_IAM'], 
                 Tags=[
                     {'Key': 'Name', 'Value': 'SAP HANA WinClient ELB'}, 
                     {'Key': 'Product', 'Value': 'SAP B1'}, 
