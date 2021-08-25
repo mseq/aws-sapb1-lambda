@@ -40,9 +40,10 @@ def main():
     # add ch to logger
     logger.addHandler(ch)
 
+    tz = int(ssm.get_parameter(Name='Environment-TimeZone')['Parameter']['Value'])
 
-    d = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%Y%m%d'))
-    h = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%H:%M'))
+    d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
+    h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
     logger.debug(f"Starting script StopEnvironment {d} {h}")
 
 

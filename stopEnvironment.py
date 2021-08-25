@@ -39,9 +39,10 @@ def main():
     # add ch to logger
     logger.addHandler(ch)
 
+    tz = int(ssm.get_parameter(Name='Environment-TimeZone')['Parameter']['Value'])
 
-    d = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%Y%m%d'))
-    h = str((datetime.utcnow() + timedelta(hours=-3)).strftime('%H:%M'))
+    d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
+    h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
     logger.debug(f"Starting script StopEnvironment {d} {h}")
 
 
@@ -58,7 +59,7 @@ def main():
         extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
         for i in [0, 1, 2]:
             days = int(extdays) + i
-            d = str((datetime.utcnow() + timedelta(hours=-3) - timedelta(days=days)).strftime('%Y%m%d'))
+            d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
 
             # Find and deregister the WinClientImg
             imgName=f"WinClient-IMG-{d}"
