@@ -44,7 +44,7 @@ def main():
 
     d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
     h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
-    logger.debug(f"Starting script StopEnvironment {d} {h}")
+    logger.debug(f"Starting script StartHana {d} {h}")
 
 
     # Take the time planned to execute the script

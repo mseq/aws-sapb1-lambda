@@ -44,7 +44,7 @@ def main():
 
     d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
     h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
-    logger.debug(f"Starting script StopEnvironment {d} {h}")
+    logger.debug(f"Starting script StartEnvironment {d} {h}")
 
 
     # Take the time planned to execute the script
@@ -98,7 +98,7 @@ def main():
 
         # Update Param Store with the right IMG
         logger.info(f"SSM Parameter CFN-NLB-WinCientAMI-Id updated with {res}")
-        res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=[res])
+        res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=res)
 
         # Execute Cloud Formation Stack
         res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
