@@ -46,13 +46,14 @@ def main():
     h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
     h1 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-1)).strftime('%H:%M'))
     h2 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-2)).strftime('%H:%M'))
-    logger.debug(f"Starting script StartHana {d} {h}")
+    logger.debug(f"Starting script StartHanaBkp {d} {h}")
 
 
     # Take the time planned to execute the script
-    res = ssm.get_parameter(Name='Start-HANA-Environment')['Parameter']['Value']
+    res = ssm.get_parameter(Name='Start-HANA-ImgBkp')['Parameter']['Value']
 
     if res == h or res == h1 or res == h2:
+        
         # Check if the image was already created, then if not create image/bkp
         imgName=f"SAPHanaMaster-IMG-{d}"
         res = ec2.describe_images(
@@ -72,36 +73,6 @@ def main():
             res = ec2.create_image(InstanceId=res, Name=imgName)['ImageId']
             logger.info(f"Creating img {imgName}")
 
-        # Make sure the image is available
-        state = ec2.describe_images(
-            Filters=[
-                    {
-                        'Name': 'name', 
-                        'Values': [imgName]
-                    }
-                ]
-            )['Images'][0]['State']
-
-        logger.info(f"Image state is {state}")
-        while state != "available":
-            time.sleep(300)
-
-            state = ec2.describe_images(
-                Filters=[
-                        {
-                            'Name': 'name', 
-                            'Values': [imgName]
-                        }
-                    ]
-                )['Images'][0]['State']
-
-            logger.info(f"Image state is {state}")
-
-
-        # Start HANA Instance
-        res = ssm.get_parameter(Name='HanaInstance-SAPB1-Environment')['Parameter']['Value']
-        logger.info(f"Starting HANA Instance {res}")
-        res = ec2.start_instances(InstanceIds=[res])
 
 
 if __name__ == "__main__":

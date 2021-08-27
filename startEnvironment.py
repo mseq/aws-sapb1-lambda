@@ -44,13 +44,15 @@ def main():
 
     d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
     h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
+    h1 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-1)).strftime('%H:%M'))
+    h2 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-2)).strftime('%H:%M'))
     logger.debug(f"Starting script StartEnvironment {d} {h}")
 
 
     # Take the time planned to execute the script
     res = ssm.get_parameter(Name='Start-SAPB1-Environment')['Parameter']['Value']
 
-    if res == h:
+    if res == h or res == h1 or res == h2:
 
         # Check if the image was already created, then if not create image/bkp and update Parameter Store
         imgName=f"WinClient-IMG-{d}"
