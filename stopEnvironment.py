@@ -69,7 +69,7 @@ def main():
                         days = int(extdays) + i
                         d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
 
-                        # Find and deregister the WinClientImg
+                        # Find and deregister the older WinClientImg
                         imgName=f"WinClient-IMG-{d}"
                         res = ec2.describe_images(
                             Filters=[
@@ -85,7 +85,7 @@ def main():
                         else:
                             logger.warning(f"No WinClient image to delete {d}")
 
-                        # Find and deregister the HanaImg
+                        # Find and deregister the older HanaImg
                         imgName=f"SAPHanaMaster-IMG-{d}"
                         res = ec2.describe_images(
                             Filters=[
@@ -100,6 +100,22 @@ def main():
                             ec2.deregister_image(ImageId=res[0]['ImageId'])
                         else:
                             logger.warning(f"No Hana Master image to delete {d}")
+
+                        # Find and deregister the older ADImg
+                        imgName=f"ADServer-IMG-{d}"
+                        res = ec2.describe_images(
+                            Filters=[
+                                    {
+                                        'Name': 'name', 
+                                        'Values': [imgName]
+                                    }
+                            ]
+                        )['Images']
+                        if res:
+                            logger.info(f"Deleting AD IMG {imgName} {res[0]['ImageId']}")
+                            ec2.deregister_image(ImageId=res[0]['ImageId'])
+                        else:
+                            logger.warning(f"No AD Server image to delete {d}")
 
                     # Stop NAT Intance
                     res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
