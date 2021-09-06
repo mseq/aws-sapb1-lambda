@@ -1,12 +1,19 @@
 import boto3
+import json
 from datetime import datetime, timedelta
 
-s3 = boto3.resource('s3')
+ssm = boto3.client('ssm')
 
-# Print out bucket names
-for bucket in s3.buckets.all():
-    print(bucket.name)
+tz = int(ssm.get_parameter(Name='Environment-TimeZone')['Parameter']['Value'])
 
+d = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%Y%m%d'))
+h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
+h1 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-1)).strftime('%H:%M'))
+h2 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-2)).strftime('%H:%M'))
 
-dthr = datetime.utcnow() + timedelta(hours=-3)
-print (dthr)
+sch = json.loads(ssm.get_parameter(Name='Environment-Schedule')['Parameter']['Value'])
+
+for weekday in sch['weekdays']:
+    if weekday['weekday'] == str(((datetime.utcnow() + timedelta(hours=tz)).weekday())):
+        if weekday['enabled'] == True:
+            print(weekday['start-img-bkp'])

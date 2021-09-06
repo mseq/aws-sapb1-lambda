@@ -13,7 +13,7 @@ def main():
     ec2 = boto3.client('ec2')
 
     # create logger
-    logger = logging.getLogger('STARTENV')
+    logger = logging.getLogger('STARTHANA')
     ch = logging.StreamHandler()
 
     # set debug level
@@ -46,7 +46,7 @@ def main():
     h = str((datetime.utcnow() + timedelta(hours=tz)).strftime('%H:%M'))
     h1 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-1)).strftime('%H:%M'))
     h2 = str((datetime.utcnow() + timedelta(hours=tz) + timedelta(minutes=-2)).strftime('%H:%M'))
-    logger.debug(f"Starting script StartEnvironment {d} {h}")
+    logger.debug(f"Starting script StartHanaBkp {d} {h}")
 
 
     # Take the time planned to execute the script
@@ -55,12 +55,30 @@ def main():
     for weekday in sch['weekdays']:
         if weekday['weekday'] == str(((datetime.utcnow() + timedelta(hours=tz)).weekday())):
             if weekday['enabled'] == True:
-                res = weekday['start-environment']
+                res = weekday['start-img-bkp']
 
                 if res == h or res == h1 or res == h2:
-                # if True:
+                    
+                    # Check if the image was already created, then if not create image/bkp // HANA
+                    imgName=f"SAPHanaMaster-IMG-{d}"
+                    res = ec2.describe_images(
+                        Filters=[
+                                {
+                                    'Name': 'name', 
+                                    'Values': [imgName]
+                                }
+                            ]
+                        )['Images']
 
-                    # Check if the image was already created, then if not create image/bkp and update Parameter Store
+                    if res:
+                        logger.warning(f"Image already exists {res[0]['ImageId']}")
+                        res = res[0]['ImageId']
+                    else:
+                        res = ssm.get_parameter(Name='HanaInstance-SAPB1-Environment')['Parameter']['Value']
+                        res = ec2.create_image(InstanceId=res, Name=imgName)['ImageId']
+                        logger.info(f"Creating img {imgName}")
+
+                    # Check if the image was already created, then if not create image/bkp // WinClient
                     imgName=f"WinClient-IMG-{d}"
                     res = ec2.describe_images(
                         Filters=[
@@ -76,61 +94,27 @@ def main():
                         res = res[0]['ImageId']
                     else:
                         res = ssm.get_parameter(Name='CFN-NLB-WinClientInstance')['Parameter']['Value']
-                        logger.info(f"Creating img {imgName}")
                         res = ec2.create_image(InstanceId=res, Name=imgName)['ImageId']
+                        logger.info(f"Creating img {imgName}")
 
-                        # Update Param Store with the right IMG
-                        logger.info(f"SSM Parameter CFN-NLB-WinCientAMI-Id updated with {res}")
-                        res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=res)
-
-
-                    # Make sure the image is available
-                    state = ec2.describe_images(
+                    # Check if the image was already created, then if not create image/bkp // ADServer
+                    imgName=f"ADServer-IMG-{d}"
+                    res = ec2.describe_images(
                         Filters=[
                                 {
                                     'Name': 'name', 
                                     'Values': [imgName]
                                 }
                             ]
-                        )['Images'][0]['State']
+                        )['Images']
 
-                    logger.info(f"Image state is {state}")
-                    while state != "available":
-                        time.sleep(30)
-
-                        state = ec2.describe_images(
-                            Filters=[
-                                    {
-                                        'Name': 'name', 
-                                        'Values': [imgName]
-                                    }
-                                ]
-                            )['Images'][0]['State']
-
-                        logger.info(f"Image state is {state}")
-
-                    # Start NAT Instance 
-                    res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
-                    logger.info(f"Starting NAT Instance {res}")
-                    res = ec2.start_instances(InstanceIds=[res])
-
-                    # Start AD Instance 
-                    res = ssm.get_parameter(Name='ADInstance-SAPB1-Environment')['Parameter']['Value']
-                    logger.info(f"Starting AD Instance {res}")
-                    res = ec2.start_instances(InstanceIds=[res])
-
-                    # Execute Cloud Formation Stack
-                    res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
-                    url = ssm.get_parameter(Name='CFN-NLB-TemplateUrl')['Parameter']['Value']
-                    logger.info(f"Creating CloudFormation Stack {res}")
-                    res = cfn.create_stack(StackName=res, TemplateURL=url, Capabilities=['CAPABILITY_NAMED_IAM'], 
-                            Tags=[
-                                {'Key': 'Name', 'Value': 'SAP HANA WinClient ELB'}, 
-                                {'Key': 'Product', 'Value': 'SAP B1'}, 
-                                {'Key': 'Department', 'Value': 'TI'}, 
-                                {'Key': 'Environment', 'Value': 'Production'}
-                            ]
-                        )
+                    if res:
+                        logger.warning(f"Image already exists {res[0]['ImageId']}")
+                        res = res[0]['ImageId']
+                    else:
+                        res = ssm.get_parameter(Name='ADInstance-SAPB1-Environment')['Parameter']['Value']
+                        res = ec2.create_image(InstanceId=res, Name=imgName)['ImageId']
+                        logger.info(f"Creating img {imgName}")
 
 
 if __name__ == "__main__":

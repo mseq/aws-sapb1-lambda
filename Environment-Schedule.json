@@ -1,0 +1,60 @@
+{
+    "weekdays" : [
+        {
+        "weekday": "0",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        },
+        {
+        "weekday": "1",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        },
+        {
+        "weekday": "2",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        },
+        {
+        "weekday": "3",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        },
+        {
+        "weekday": "4",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        },
+        {
+        "weekday": "5",
+        "enabled": true,
+        "start-img-bkp": "05:00",
+        "start-hana": "08:30",
+        "start-environment": "08:45",
+        "stop-environment": "15:00"
+        },
+        {
+        "weekday": "6",
+        "enabled": false,
+        "start-img-bkp": "05:00",
+        "start-hana": "07:30",
+        "start-environment": "07:45",
+        "stop-environment": "20:00"
+        }
+    ]
+}

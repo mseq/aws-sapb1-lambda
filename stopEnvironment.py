@@ -49,67 +49,78 @@ def main():
 
 
     # Take the time planned to execute the script
-    res = ssm.get_parameter(Name='ShutDown-SAPB1-Environment')['Parameter']['Value']
+    sch = json.loads(ssm.get_parameter(Name='Environment-Schedule')['Parameter']['Value'])
 
-    if res == h or res == h1 or res == h2:
+    for weekday in sch['weekdays']:
+        if weekday['weekday'] == str(((datetime.utcnow() + timedelta(hours=tz)).weekday())):
+            if weekday['enabled'] == True:
+                res = weekday['stop-environment']
 
-        # Kill Cloud Formation Stack
-        res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
-        logger.info(f"Deleting Cloud Formation Stack: {res}")
-        res = cfn.delete_stack(StackName=res)
+                if res == h or res == h1 or res == h2:
 
-        # Expunge Image Backup with Expiring Retention Period for 3 consecutive days
-        extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
-        for i in [0, 1, 2]:
-            days = int(extdays) + i
-            d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
+                    # Kill Cloud Formation Stack
+                    res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
+                    logger.info(f"Deleting Cloud Formation Stack: {res}")
+                    res = cfn.delete_stack(StackName=res)
 
-            # Find and deregister the WinClientImg
-            imgName=f"WinClient-IMG-{d}"
-            res = ec2.describe_images(
-                Filters=[
-                        {
-                            'Name': 'name', 
-                            'Values': [imgName]
-                        }
-                ]
-            )['Images']
-            if res:
-                logger.info(f"Deleting WinClient IMG {imgName} {res[0]['ImageId']}")
-                ec2.deregister_image(ImageId=res[0]['ImageId'])
-            else:
-                logger.warning(f"No WinClient image to delete {d}")
+                    # Expunge Image Backup with Expiring Retention Period for 3 consecutive days
+                    extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
+                    for i in [0, 1, 2]:
+                        days = int(extdays) + i
+                        d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
 
-            # Find and deregister the HanaImg
-            imgName=f"SAPHanaMaster-IMG-{d}"
-            res = ec2.describe_images(
-                Filters=[
-                        {
-                            'Name': 'name', 
-                            'Values': [imgName]
-                        }
-                ]
-            )['Images']
-            if res:
-                logger.info(f"Deleting Hana IMG {imgName} {res[0]['ImageId']}")
-                ec2.deregister_image(ImageId=res[0]['ImageId'])
-            else:
-                logger.warning(f"No Hana Master image to delete {d}")
+                        # Find and deregister the WinClientImg
+                        imgName=f"WinClient-IMG-{d}"
+                        res = ec2.describe_images(
+                            Filters=[
+                                    {
+                                        'Name': 'name', 
+                                        'Values': [imgName]
+                                    }
+                            ]
+                        )['Images']
+                        if res:
+                            logger.info(f"Deleting WinClient IMG {imgName} {res[0]['ImageId']}")
+                            ec2.deregister_image(ImageId=res[0]['ImageId'])
+                        else:
+                            logger.warning(f"No WinClient image to delete {d}")
 
-        # Stop NAT Intance
-        res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
-        logger.info(f"Stoping NAT Instance {res}")
-        res = ec2.stop_instances(InstanceIds=[res])
+                        # Find and deregister the HanaImg
+                        imgName=f"SAPHanaMaster-IMG-{d}"
+                        res = ec2.describe_images(
+                            Filters=[
+                                    {
+                                        'Name': 'name', 
+                                        'Values': [imgName]
+                                    }
+                            ]
+                        )['Images']
+                        if res:
+                            logger.info(f"Deleting Hana IMG {imgName} {res[0]['ImageId']}")
+                            ec2.deregister_image(ImageId=res[0]['ImageId'])
+                        else:
+                            logger.warning(f"No Hana Master image to delete {d}")
 
-        # Shutdown WinClient Instance
-        res = ssm.get_parameter(Name='CFN-NLB-WinClientInstance')['Parameter']['Value']
-        logger.info(f"Stoping WinClient Instance {res}")
-        res = ec2.stop_instances(InstanceIds=[res])
+                    # Stop NAT Intance
+                    res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
+                    logger.info(f"Stoping NAT Instance {res}")
+                    res = ec2.stop_instances(InstanceIds=[res])
 
-        # Shutdown RDP Instance
-        res = ssm.get_parameter(Name='RDPInstance-SAPB1-Environment')['Parameter']['Value']
-        logger.info(f"Stoping RDP Instance {res}")
-        res = ec2.stop_instances(InstanceIds=[res])
+                    # # Shutdown WinClient Instance
+                    # res = ssm.get_parameter(Name='CFN-NLB-WinClientInstance')['Parameter']['Value']
+                    # logger.info(f"Stoping WinClient Instance {res}")
+                    # res = ec2.stop_instances(InstanceIds=[res])
+
+                    # # Shutdown RDP Instance
+                    # res = ssm.get_parameter(Name='RDPInstance-SAPB1-Environment')['Parameter']['Value']
+                    # logger.info(f"Stoping RDP Instance {res}")
+                    # res = ec2.stop_instances(InstanceIds=[res])
+
+                    # Shutdown AD Server
+                    res = ssm.get_parameter(Name='ADInstance-SAPB1-Environment')['Parameter']['Value']
+                    logger.info(f"Stoping RDP Instance {res}")
+                    res = ec2.stop_instances(InstanceIds=[res])
+
 
 
 if __name__ == "__main__":
