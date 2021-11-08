@@ -79,9 +79,9 @@ def main():
                         logger.info(f"Creating img {imgName}")
                         res = ec2.create_image(InstanceId=res, Name=imgName)['ImageId']
 
-                        # Update Param Store with the right IMG
-                        logger.info(f"SSM Parameter CFN-NLB-WinCientAMI-Id updated with {res}")
-                        res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=res)
+                    # Update Param Store with the right IMG
+                    logger.info(f"SSM Parameter CFN-NLB-WinCientAMI-Id updated with {res}")
+                    res = ssm.put_parameter(Name='CFN-NLB-WinCientAMI-Id', Type='String', Overwrite=True, Value=res)
 
 
                     # Make sure the image is available

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import boto3
 import logging
 import json
+import time
 
 def main():
 # def lambda_handler(event, context):
@@ -10,6 +11,7 @@ def main():
     ssm = boto3.client('ssm')
     cfn = boto3.client('cloudformation')
     ec2 = boto3.client('ec2')
+    asg = boto3.client('autoscaling')
 
     # create logger
     logger = logging.getLogger('STOPENV')
@@ -137,6 +139,22 @@ def main():
                     logger.info(f"Stoping RDP Instance {res}")
                     res = ec2.stop_instances(InstanceIds=[res])
 
+                    # Shutdown ASG Fleet Instances and Remove their ScaleIn Protection
+                    res = asg.describe_auto_scaling_groups()
+                    for autoscalinggroup in res['AutoScalingGroups']:
+                        if (autoscalinggroup['AutoScalingGroupName'].find("WinClientELB-FleetASG") >= 0):
+                            for instance in autoscalinggroup['Instances']:
+                                # logger.info(f"Stoping ASG Instance {instance['InstanceId']}")
+                                # ec2.stop_instances(InstanceIds=instance['InstanceId'])
+
+                                logger.info(f"Removing ScaleIn Protection from ASG Instance {instance['InstanceId']}")
+                                asg.set_instance_protection(
+                                    InstanceIds=[instance['InstanceId']],
+                                    AutoScalingGroupName=autoscalinggroup['AutoScalingGroupName'],
+                                    ProtectedFromScaleIn=False)
+
+                                logger.info(f"Terminating the ASG Instance {instance['InstanceId']}")
+                                ec2.terminate_instances(InstanceIds=[instance['InstanceId']])
 
 
 if __name__ == "__main__":
