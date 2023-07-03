@@ -58,7 +58,7 @@ def main():
             if weekday['enabled'] == True:
                 res = weekday['stop-environment']
 
-                if True: #res == h or res == h1 or res == h2:
+                if res == h or res == h1 or res == h2:
 
                     # # Kill Cloud Formation Stack
                     res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
