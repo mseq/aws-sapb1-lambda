@@ -24,7 +24,7 @@ for image in response['Images']:
 print(f"\nTotal Images: {imgCounter}")
 print(f"Total Snapshots: {snapshotCounter}\n\n")
 
-print(snapshots)
+# print(snapshots)
 
 # Get all snapshots
 all_snapshots = EC2.describe_snapshots(OwnerIds=['self'])['Snapshots']
