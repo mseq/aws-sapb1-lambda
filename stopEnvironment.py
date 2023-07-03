@@ -58,9 +58,9 @@ def main():
             if weekday['enabled'] == True:
                 res = weekday['stop-environment']
 
-                if res == h or res == h1 or res == h2:
+                if True: #res == h or res == h1 or res == h2:
 
-                    # Kill Cloud Formation Stack
+                    # # Kill Cloud Formation Stack
                     res = ssm.get_parameter(Name='CFN-NLB-StackName')['Parameter']['Value']
                     logger.info(f"Deleting Cloud Formation Stack: {res}")
                     res = cfn.delete_stack(StackName=res)
@@ -71,53 +71,26 @@ def main():
                         days = int(extdays) + i
                         d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
 
-                        # Find and deregister the older WinClientImg
-                        imgName=f"WinClient-IMG-{d}"
-                        res = ec2.describe_images(
-                            Filters=[
-                                    {
-                                        'Name': 'name', 
-                                        'Values': [imgName]
-                                    }
-                            ]
-                        )['Images']
-                        if res:
-                            logger.info(f"Deleting WinClient IMG {imgName} {res[0]['ImageId']}")
-                            ec2.deregister_image(ImageId=res[0]['ImageId'])
-                        else:
-                            logger.warning(f"No WinClient image to delete {d}")
+                        # Find and deregister the older Images
+                        for imgName in [f"WinClient-IMG-{d}", f"SAPHanaMaster-IMG-{d}", f"ADServer-IMG-{d}"]:
+                            results = ec2.describe_images(
+                                Filters=[
+                                        {
+                                            'Name': 'name', 
+                                            'Values': [imgName]
+                                        }
+                                ]
+                            )['Images']
 
-                        # Find and deregister the older HanaImg
-                        imgName=f"SAPHanaMaster-IMG-{d}"
-                        res = ec2.describe_images(
-                            Filters=[
-                                    {
-                                        'Name': 'name', 
-                                        'Values': [imgName]
-                                    }
-                            ]
-                        )['Images']
-                        if res:
-                            logger.info(f"Deleting Hana IMG {imgName} {res[0]['ImageId']}")
-                            ec2.deregister_image(ImageId=res[0]['ImageId'])
-                        else:
-                            logger.warning(f"No Hana Master image to delete {d}")
+                            for res in results:
+                                logger.info(f"Deleting WinClient IMG {imgName} {res['ImageId']}")
 
-                        # Find and deregister the older ADImg
-                        imgName=f"ADServer-IMG-{d}"
-                        res = ec2.describe_images(
-                            Filters=[
-                                    {
-                                        'Name': 'name', 
-                                        'Values': [imgName]
-                                    }
-                            ]
-                        )['Images']
-                        if res:
-                            logger.info(f"Deleting AD IMG {imgName} {res[0]['ImageId']}")
-                            ec2.deregister_image(ImageId=res[0]['ImageId'])
-                        else:
-                            logger.warning(f"No AD Server image to delete {d}")
+                                ec2.deregister_image(ImageId=res['ImageId'])
+
+                                for block_device in res['BlockDeviceMappings']:
+                                    if 'SnapshotId' in block_device['Ebs']:
+                                        ec2.delete_snapshot(SnapshotId=block_device['Ebs']['SnapshotId'])
+
 
                     # Stop NAT Intance
                     res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
