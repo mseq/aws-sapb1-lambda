@@ -37,7 +37,7 @@ deletedSnapshots = 0
 for snapshot in all_snapshots:
     if snapshot['SnapshotId'] not in snapshots:
         deletedSnapshots += 1
-        print(f"...Deleting snapshot {snapshot['SnapshotId']} ({str(round(deletedSnapshots/totalSnapshots*100, 2))}%)")
+        print(f"...Deleting snapshot {snapshot['SnapshotId']} ({str(round(deletedSnapshots/(totalSnapshots - snapshotCounter)*100, 2))}%)")
         EC2.delete_snapshot(SnapshotId=snapshot['SnapshotId'])
 
 

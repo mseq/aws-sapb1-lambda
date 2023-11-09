@@ -103,11 +103,28 @@ def main():
                         logger.info(f"Image state is {state}")
 
 
-                    # Start HANA Instance
-                    res = ssm.get_parameter(Name='HanaInstance-SAPB1-Environment')['Parameter']['Value']
-                    logger.info(f"Starting HANA Instance {res}")
-                    res = ec2.start_instances(InstanceIds=[res])
+                    state = 'stopped'
 
+                    while state == 'stopped':
+                        # Start HANA Instance
+                        res = ssm.get_parameter(Name='HanaInstance-SAPB1-Environment')['Parameter']['Value']
+                        logger.info(f"Starting HANA Instance {res}")
+
+                        try:
+                            res = ec2.start_instances(InstanceIds=[res])
+                        except Exception as e:
+                            logger.error(f"Error starting HANA Instance {e}")
+                            if e.response['Error']['Code'] == 'InsufficientInstanceCapacity':
+                                pass
+                            else:
+                                raise e
+
+                        # Wait for HANA Instance to be running
+                        state = ec2.describe_instances(
+                            InstanceIds=[ssm.get_parameter(Name='HanaInstance-SAPB1-Environment')['Parameter']['Value']]
+                            )['Reservations'][0]['Instances'][0]['State']['Name']
+                        
+                        time.sleep(30)        
 
 if __name__ == "__main__":
     main()

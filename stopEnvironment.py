@@ -64,33 +64,6 @@ def lambda_handler(event, context):
                     logger.info(f"Deleting Cloud Formation Stack: {res}")
                     res = cfn.delete_stack(StackName=res)
 
-                    # Expunge Image Backup with Expiring Retention Period for 3 consecutive days
-                    extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
-                    for i in [0, 1, 2]:
-                        days = int(extdays) + i
-                        d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
-
-                        # Find and deregister the older Images
-                        for imgName in [f"WinClient-IMG-{d}", f"SAPHanaMaster-IMG-{d}", f"ADServer-IMG-{d}"]:
-                            results = ec2.describe_images(
-                                Filters=[
-                                        {
-                                            'Name': 'name', 
-                                            'Values': [imgName]
-                                        }
-                                ]
-                            )['Images']
-
-                            for res in results:
-                                logger.info(f"Deleting WinClient IMG {imgName} {res['ImageId']}")
-
-                                ec2.deregister_image(ImageId=res['ImageId'])
-
-                                for block_device in res['BlockDeviceMappings']:
-                                    if 'SnapshotId' in block_device['Ebs']:
-                                        ec2.delete_snapshot(SnapshotId=block_device['Ebs']['SnapshotId'])
-
-
                     # Stop NAT Intance
                     res = ssm.get_parameter(Name='NatInstance-SAPB1-Environment')['Parameter']['Value']
                     logger.info(f"Stoping NAT Instance {res}")
@@ -127,6 +100,38 @@ def lambda_handler(event, context):
 
                                 logger.info(f"Terminating the ASG Instance {instance['InstanceId']}")
                                 ec2.terminate_instances(InstanceIds=[instance['InstanceId']])
+
+                        asg.delete_auto_scaling_group(
+                            AutoScalingGroupName=autoscalinggroup['AutoScalingGroupName'],
+                            ForceDelete=True
+                        )
+
+                    # Expunge Image Backup with Expiring Retention Period for 3 consecutive days
+                    extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
+                    for i in [0, 1, 2]:
+                        days = int(extdays) + i
+                        d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
+
+                        # Find and deregister the older Images
+                        for imgName in [f"WinClient-IMG-{d}", f"SAPHanaMaster-IMG-{d}", f"ADServer-IMG-{d}"]:
+                            results = ec2.describe_images(
+                                Filters=[
+                                        {
+                                            'Name': 'name', 
+                                            'Values': [imgName]
+                                        }
+                                ]
+                            )['Images']
+
+                            for res in results:
+                                logger.info(f"Deleting WinClient IMG {imgName} {res['ImageId']}")
+
+                                ec2.deregister_image(ImageId=res['ImageId'])
+
+                                for block_device in res['BlockDeviceMappings']:
+                                    if 'SnapshotId' in block_device['Ebs']:
+                                        ec2.delete_snapshot(SnapshotId=block_device['Ebs']['SnapshotId'])
+
 
 
 if __name__ == "__main__":

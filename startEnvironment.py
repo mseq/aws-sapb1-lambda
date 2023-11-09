@@ -11,6 +11,9 @@ def main():
     ssm = boto3.client('ssm')
     cfn = boto3.client('cloudformation')
     ec2 = boto3.client('ec2')
+    fsx = boto3.client('fsx')
+
+    FSID = 'fs-07d5c8834984c8396'
 
     # create logger
     logger = logging.getLogger('STARTENV')
@@ -131,6 +134,19 @@ def main():
                                 {'Key': 'Environment', 'Value': 'Production'}
                             ]
                         )
+                    
+                    # # Handle Misconfigured FSx
+                    # fs = fsx.describe_file_systems(FileSystemIds=[FSID])
+                    # if fs['FileSystems'][0]['Lifecycle'] == 'MISCONFIGURED':
+                    #     logger.info(f"FSx {FSID} is misconfigured, correcting it")
+                    #     res = fsx.update_file_system(
+                    #         FileSystemId=FSID,
+                    #         WindowsConfiguration={ "DnsIps": ["10.160.1.10"] }
+                    #     )
+
+                    #     fs = fsx.describe_file_systems(FileSystemIds=[FSID])
+
+                    #     logger.info(f"FSx {FSID} is {fs['FileSystems'][0]['Lifecycle']}")
 
 
 if __name__ == "__main__":
