@@ -4,8 +4,7 @@ import logging
 import time
 import json
 
-def main():
-# def lambda_handler(event, context):
+def lambda_handler(event, context):
 
     # Take boto3 clients
     ssm = boto3.client('ssm')
@@ -127,4 +126,4 @@ def main():
                         time.sleep(30)        
 
 if __name__ == "__main__":
-    main()
+    lambda_handler(None, None)
