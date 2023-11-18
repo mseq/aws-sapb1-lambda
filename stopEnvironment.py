@@ -108,7 +108,7 @@ def lambda_handler(event, context):
 
                     # Expunge Image Backup with Expiring Retention Period for 3 consecutive days
                     extdays = ssm.get_parameter(Name='RetentionPeriod-SAPB1-Environment')['Parameter']['Value']
-                    for i in [0, 1, 2]:
+                    for i in [0, 1, 2, 3]:
                         days = int(extdays) + i
                         d = str((datetime.utcnow() + timedelta(hours=tz) - timedelta(days=days)).strftime('%Y%m%d'))
 
